@@ -1,17 +1,199 @@
 ---
-title: "MSK_Chorddata_code"
+title: "MSK_Chorddata_code_project1"
 format: html
 editor: visual
 ---
 
 ```{r}
-getwd()
+# Reading the clinical patient data
 
-
-
-msk_data <- read.table("msk_chord_2024_clinical_data.tsv", 
+clinical_patient <- read.delim("msk_chord_2024_data/data_clinical_patient.txt", 
                    header = TRUE, 
                    sep = "\t", 
                    stringsAsFactors = FALSE)
-View(msk_data)
+View(clinical_patient)
+
+names(clinical_patient)
+typeof(clinical_patient)
+#str(clinical_patient)
+```
+
+```{r}
+
+library(kableExtra)
+clinical_sample <- read.delim("msk_chord_2024_data/data_clinical_sample.txt", comment.char="#")
+View(clinical_sample)
+kable(table(clinical_sample$CANCER_TYPE))
+names (clinical_sample)
+
+typeof(clinical_sample)
+```
+
+names(timeline_diag)
+
+```{r}
+timeline_diag <-  read.delim2("msk_chord_2024_data/data_timeline_diagnosis.txt", 
+                   header = TRUE, 
+                   sep = "\t", 
+                   stringsAsFactors = FALSE)
+View(timeline_diag)
+unique(timeline_diag$SUBTYPE)
+names(timeline_diag)
+unique(timeline_diag$SUBTYPE)
+```
+
+```{r}
+cna <- read.table("msk_chord_2024_data/data_cna.txt", 
+                   header = TRUE, 
+                   sep = "\t", 
+                   stringsAsFactors = FALSE)
+#View(cna)
+names(cna)
+```
+
+```{r}
+
+```
+
+```{r}
+mutations <- read.delim("msk_chord_2024_data/data_mutations.txt", 
+                   header = TRUE, 
+                   sep = "\t", 
+                   stringsAsFactors = FALSE)
+View(mutations)
+names(mutations)
+
+
+```
+
+```{r}
+library(data.table)
+cna_seg <- fread("msk_chord_2024_data/data_cna_hg19.seg")
+head(cna_seg)
+View(cna_seg)
+names(cna_seg)
+```
+
+```{r}
+sv <- read.delim("msk_chord_2024_data/data_sv.txt", 
+                   header = TRUE, 
+                   sep = "\t", 
+                   stringsAsFactors = FALSE)
+#View(sv)
+names(sv)
+```
+
+```{r}
+gene_panel <- read.table("msk_chord_2024_data/data_gene_panel_matrix.txt", 
+                   header = TRUE, 
+                   sep = "\t", 
+                   stringsAsFactors = FALSE)
+#View(gene_panel)
+names(gene_panel)
+library(jsonlite)
+impact341 <- fromJSON("https://www.cbioportal.org/api/gene-panels/IMPACT341")$genes$hugoGeneSymbol
+impact410 <- fromJSON("https://www.cbioportal.org/api/gene-panels/IMPACT410")$genes$hugoGeneSymbol
+impact468 <- fromJSON("https://www.cbioportal.org/api/gene-panels/IMPACT468")$genes$hugoGeneSymbol
+impact505 <- fromJSON("https://www.cbioportal.org/api/gene-panels/IMPACT505")$genes$hugoGeneSymbol
+
+# Create a lookup list if you want
+panel_genes <- list(
+  IMPACT341 = impact341,
+  IMPACT410 = impact410,
+  IMPACT468 = impact468,
+  IMPACT505 = impact505
+)
+panel_genes
+```
+
+```{r}
+getwd
+
+timeline_progress <-  read.delim("msk_chord_2024_data/data_timeline_progression.txt"
+                                , header = TRUE, 
+                                sep = "\t", 
+                                stringsAsFactors = FALSE)
+View(timeline_progress)
+names(timeline_progress)
+```
+
+```{r}
+TumorSites <- read.delim("msk_chord_2024_data/data_timeline_tumor_sites.txt")
+View(TumorSites)
+head(TumorSites)
+names(TumorSites)
+```
+
+```{r}
+treatment <- read.delim("msk_chord_2024_data/data_timeline_treatment.txt")
+#View(treatment)
+head(treatment)
+names(treatment)
+```
+
+```{r}
+radiation <- read.delim("msk_chord_2024_data/data_timeline_radiation.txt")
+#View(radiation)
+head(radiation)
+names(radiation)
+```
+
+```{r}
+surgery <- read.delim("msk_chord_2024_data/data_timeline_surgery.txt")
+head(surgery)
+names(surgery)
+```
+
+```{r}
+prior_meds<- read.delim("msk_chord_2024_data/data_timeline_prior_meds.txt")
+#View(prior_meds)
+head(prior_meds)
+names(prior_meds)
+```
+
+```{r}
+psa <- read.delim("msk_chord_2024_data/data_timeline_psa_labs.txt")
+#View(psa)
+head(psa)
+names(psa)
+```
+
+```{r}
+
+
+names(clinical_patient)
+#str(clinical_patient)
+names (clinical_sample)
+#str(clinical_sample)
+names(timeline_diag)
+#str(timeline_diag)
+names(cna_seg)
+
+names(mutations)
+names(sv)
+names(gene_panel)
+names(timeline_progress)
+names(TumorSites)
+names(treatment)
+names(radiation)
+names(surgery)
+names(prior_meds)
+names(psa)
+
+
+str(clinical_patient)
+str(clinical_sample)
+str(timeline_diag)
+str(cna_seg)
+str(mutations)
+str(sv)
+str(gene_panel)
+str(timeline_progress)
+str(TumorSites)
+str(treatment)
+str(radiation)
+str(surgery)
+str(prior_meds)
+str(psa)
+
 ```
