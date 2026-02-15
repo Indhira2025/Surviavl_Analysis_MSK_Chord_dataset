@@ -34,6 +34,7 @@ str(clin_sample)
 str(muta)
 str(cna)
 str(sv)
+head(sv)
 head(clin_patient)
 colnames(clin_patient)
 
@@ -45,6 +46,11 @@ clin_patient <- as.data.table(clin_patient)
 # Merge by PATIENT_ID
 merged_data <- merge(clin_sample, clin_patient, by = "PATIENT_ID", all.x = TRUE)
 head(merged_data)
+colnames(merged_data)
+clean_data
+
+sv[Sample_Id %in% filtered_samples()$SAMPLE_ID]
+
 
 library(dplyr)
 
