@@ -5,6 +5,6 @@ account: indhirav
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16680424
-bundleId: 11585918
+bundleId: 11586000
 url: https://indhirav.shinyapps.io/msk_dashboard/
 version: 1
