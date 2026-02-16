@@ -24,11 +24,15 @@ clinical_patient <- read.delim("msk_chord_2024_data/data_clinical_patient.txt",
                    header = TRUE, 
                    sep = "\t", 
                    stringsAsFactors = FALSE)
-View(clinical_patient)
+#View(clinical_patient)
 
 names(clinical_patient)
 typeof(clinical_patient)
-str(clinical_patient)
+#str(clinical_patient)
+clinical_patient <- clinical_patient %>%
+  rename(PATIENT_ID = X.Patient.Identifier)
+
+
 clinical_patient[clinical_patient$X.Patient.Identifier == "P-0001340",]
 ```
 
@@ -36,13 +40,13 @@ clinical_patient[clinical_patient$X.Patient.Identifier == "P-0001340",]
 
 library(kableExtra)
 clinical_sample <- read.delim("msk_chord_2024_data/data_clinical_sample.txt", comment.char="#")
-View(clinical_sample)
+#View(clinical_sample)
 kable(table(clinical_sample$CANCER_TYPE))
 names (clinical_sample)
 
 #typeof(clinical_sample)
 table(clinical_sample$SAMPLE_TYPE)
-str(clinical_sample)
+#str(clinical_sample)
 ```
 
 names(timeline_diag)
@@ -52,24 +56,101 @@ timeline_diag <-  read.delim2("msk_chord_2024_data/data_timeline_diagnosis.txt",
                    header = TRUE, 
                    sep = "\t", 
                    stringsAsFactors = FALSE)
-View(timeline_diag)
-unique(timeline_diag$SUBTYPE)
+#View(timeline_diag)
+#unique(timeline_diag$SUBTYPE)
 names(timeline_diag)
-unique(timeline_diag$STAGE_CDM_DERIVED)
-unique(timeline_diag$SUMMARY)
-str(timeline_diag)
+#unique(timeline_diag$STAGE_CDM_DERIVED)
+#unique(timeline_diag$SUMMARY)
+#str(timeline_diag)
 
 ## 
 timeline_diag$SUMMARY <- trimws(timeline_diag$SUMMARY)
 
-baseline_stage <- timeline_diag %>%
+
+## Determine Baseline Stage at Sequencing & Remove Patients Metastatic at Baseline
+non_met_baseline <- timeline_diag %>%
   filter(START_DATE <= 0) %>% # all diagnosis records happened before or at genomic                               #baseline.
   group_by(PATIENT_ID) %>%
-  slice_max(START_DATE) %>% # What was the stage at the time of genomic profiling?
+  slice_max(START_DATE) %>% #What was the Patient's stage at the time of seqencing?
   filter(STAGE_CDM_DERIVED != "Stage 4" ) %>%
   filter(!SUMMARY %in% c("Distant", "Distant metastases/systemic disease"))
-View(baseline_stage)  
-unique(baseline_stage$SUMMARY)
+#View(baseline_stage)  
+#unique(baseline_stage$SUMMARY)
+
+#at-risk cohort
+
+n_distinct(non_met_baseline$PATIENT_ID)
+
+```
+
+```{r}
+getwd
+
+timeline_progress <-  read.delim("msk_chord_2024_data/data_timeline_progression.txt"
+                                , header = TRUE, 
+                                sep = "\t", 
+                                stringsAsFactors = FALSE)
+View(timeline_progress)
+names(timeline_progress)
+str(timeline_progress)
+table(timeline_progress$PROGRESSION)
+
+
+# patients who cannot be included in a time-to-metastasis analysis because they 
+## already had metastasis at the time of sequencing.
+pre_baseline_met <- timeline_progress %>%
+  filter(
+    START_DATE <= 0,
+    PROGRESSION == "Y"
+  ) %>%
+  distinct(PATIENT_ID)
+
+## eligible patients from clinical_patient_data
+
+eligible_patients <- clinical_patient %>%
+  filter(PATIENT_ID %in% non_met_baseline$PATIENT_ID) %>%  
+  # keep only non-metastatic at sequencing
+  filter(!PATIENT_ID %in% pre_baseline_met$PATIENT_ID)      
+  # remove anyone who had metastasis recorded pre-baseline
+
+
+# Extracting post-baseline metastasis events
+
+met_events <- timeline_progress %>%
+  filter(START_DATE > 0,
+         PROGRESSION == "Y") %>%
+  group_by(PATIENT_ID) %>%
+  summarise(first_met_day = min(START_DATE),
+            .groups = "drop")
+#View(met_events)
+
+
+# Extarcting  last follow-up time
+last_followup <- timeline_progress %>%
+  group_by(PATIENT_ID) %>%
+  summarise(last_day = max(START_DATE, na.rm = TRUE),
+            .groups = "drop")
+
+#View(last_followup)
+
+#=========================================================================
+## Time to metastasis event
+ttm_data <- eligible_patients %>%
+  left_join(met_events, by = "PATIENT_ID") %>%
+  left_join(last_followup, by = "PATIENT_ID") %>%
+  mutate(
+    event = ifelse(!is.na(first_met_day), 1, 0),
+    time  = ifelse(event == 1,
+                   first_met_day,
+                   last_day)
+  ) %>%
+  filter(!is.na(time),
+         time >= 0)   #The latest recorded event for this patient happened before                        #sequencing. we have no post-sequencing follow-up data.
+                      #This patient cannot contribute meaningful survival info
+#View(ttm_data)
+summary(ttm_data$time)
+table(ttm_data$event)
+
 ```
 
 ```{r}
@@ -147,6 +228,49 @@ View(timeline_progress)
 names(timeline_progress)
 str(timeline_progress)
 table(timeline_progress$PROGRESSION)
+
+pre_baseline_met <- timeline_progress %>%
+  filter(
+    START_DATE <= 0,
+    PROGRESSION == "Y"
+  ) %>%
+  distinct(PATIENT_ID)
+
+clinical_patient <- clinical_patient %>%
+  rename(PATIENT_ID = X.Patient.Identifier)
+
+eligible_patients <- clinical_patient %>%
+  filter(!PATIENT_ID %in% pre_baseline_met$PATIENT_ID)
+
+
+met_events <- timeline_progress %>%
+  mutate(across(where(is.character), trimws)) %>%
+  filter(START_DATE > 0,
+         PROGRESSION == "Y") %>%
+  group_by(PATIENT_ID) %>%
+  summarise(first_met_day = min(START_DATE))
+
+View(met_events)
+
+last_followup <- timeline_progress %>%
+  group_by(PATIENT_ID) %>%
+  summarise(last_day = max(START_DATE, na.rm = TRUE))
+View(last_followup)
+
+ttm_data <- eligible_patients %>%
+  left_join(met_events, by = "PATIENT_ID") %>%
+  left_join(last_followup, by = "PATIENT_ID") %>%
+  mutate(
+    event = ifelse(!is.na(first_met_day), 1, 0),
+    time  = ifelse(event == 1,
+                   first_met_day,
+                   last_day)
+  )
+
+#View(ttm_data)
+summary(ttm_data$time)
+table(ttm_data$event)
+
 ```
 
 ```{r}
