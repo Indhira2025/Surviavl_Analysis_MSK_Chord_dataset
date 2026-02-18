@@ -1,0 +1,78 @@
+---
+title: "Report"
+output: html_document
+date: "2026-02-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Construction of Time to Metastasis Outcome
+
+Time to metastasis (TTM) was defined as the interval from the date of genomic sequencing (baseline; t=0) to the first documented metastatic progression event. Timeline-based longitudinal clinical records were used to define baseline disease status, identify incident metastatic events, and determine follow-up time.
+
+### Definition of Baseline and At-Risk Cohort
+
+Baseline was defined as the genomic sequencing date. To ensure inclusion of only patients at risk for future metastatic progression, the following exclusions were applied:
+
+#### Metastasis prior to or at baseline
+
+Patients with documented progression events (PROGRESSION = "Y") occurring at or before sequencing (START_DATE≤0 ) were excluded.
+
+#### Metastatic disease at baseline diagnosis
+
+Among diagnosis records occurring on or before sequencing ( START_DATE≤0), the most recent pre-sequencing stage was identified. Patients were excluded if they had: Stage IV disease, or
+
+Documentation of distant/systemic disease at baseline.
+
+#### No observable post-baseline follow-up
+
+Patients whose last recorded clinical event occurred prior to sequencing were excluded, as they did not contribute post-baseline risk time.
+
+The resulting analytic cohort consisted exclusively of patients who were metastasis-free at the time of genomic profiling and remained under observation thereafter
+
+### Identification of Metastatic Events and Censoring
+
+Post-baseline metastatic events were defined as progression records with:
+
+PROGRESSION = "Y", and
+
+START_DATE\>0.
+
+For each patient 𝑖 , the earliest such event was taken as the incident metastasis time.
+
+Patients without a post-baseline metastatic event were censored at their last recorded clinical event date (maximum START_DATE).
+
+### Statistical Definition of the Time-to-Event Outcome
+
+
+For each patient $i$, let
+
+$$
+T_i = \min(T_i^*, C_i)
+$$
+
+where $T_i^*$ denotes the true time from sequencing to metastatic progression, and $C_i$ denotes the censoring time (last recorded follow-up).
+
+Define the event indicator as
+
+$$
+\delta_i =
+\begin{cases}
+1 & \text{if } T_i^* \le C_i \quad (\text{metastasis observed}) \\
+0 & \text{if } T_i^* > C_i \quad (\text{censored})
+\end{cases}
+$$
+
+The observed time-to-metastasis outcome for patient $i$ is therefore represented as
+
+$$
+\text{Surv}(T_i, \delta_i),
+$$
+
+where $T_i \ge 0$ for all patients and time is measured in days from the date of genomic sequencing (baseline).
+
+
+
+This construction ensured a well-defined risk set beginning at genomic sequencing, excluded prevalent metastatic disease, and minimized immortal time bias by anchoring follow-up at a biologically and clinically meaningful time origin.

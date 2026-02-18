@@ -84,15 +84,15 @@ n_distinct(non_met_baseline$PATIENT_ID)
 ```
 
 ```{r}
-getwd
+library(kableExtra)
 
 timeline_progress <-  read.delim("msk_chord_2024_data/data_timeline_progression.txt"
                                 , header = TRUE, 
                                 sep = "\t", 
                                 stringsAsFactors = FALSE)
-View(timeline_progress)
+#View(timeline_progress)
 names(timeline_progress)
-str(timeline_progress)
+#str(timeline_progress)
 table(timeline_progress$PROGRESSION)
 
 
@@ -149,7 +149,18 @@ ttm_data <- eligible_patients %>%
                       #This patient cannot contribute meaningful survival info
 #View(ttm_data)
 summary(ttm_data$time)
-table(ttm_data$event)
+kable(table(ttm_data$event))
+ttm_data
+```
+
+```{r}
+#Create a survival object
+library(survival)
+
+surv_obj <- Surv(time = ttm_data$time, # creates the correct structure required for
+                 event = ttm_data$event) # RSF or cox regression
+
+
 
 ```
 
